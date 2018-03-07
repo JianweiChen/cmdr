@@ -1,0 +1,302 @@
+<!--<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!--<meta name="viewport" content="user-scalable=0" />-->
+    <meta name="viewport" content="width=device-width,height=device-height"/>
+    <title>云制造设计资源网</title>
+    <style type="text/css">
+        .feed-marker {
+            text-align: center;
+            background-color: darkseagreen;
+            color: white;
+        }
+        .query-footer-right {
+            cursor: pointer
+        }
+
+    </style>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/front.min.js"></script>
+    <script type="text/template" id="show">
+        <li>
+            <div class="model-show" style="padding: 10px 0; position: relative; border-bottom: solid 1px #e8e8e8; height: 123px">
+                <div class="model-show-left">
+                    <img src="{{himg}}"/>
+                </div>
+                <div class="model-show-right">
+                    <div class="model-title">
+                        <span><a href="{{source}}" target="_blank">{{title}}</a></span>
+                    </div>
+                    <div class="model-desc">{{desc}}</div>
+                    <div class="model-summary">
+                        <ul class="model-summary-list">
+                            <li><a>打印虎</a></li>
+                            <li><a>3天前</a></li>
+                            <li><a>展示:{{impr}}</a></li>
+                            <li><a>点击:{{detail}}</a></li>
+                            <li><a>下载:{{download}}</a></li>
+                            <li><a>顶:{{digg}}</a></li>
+                            <li><a>踩:{{bury}}</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </li>
+    </script>
+    <script>
+         $(document).bind("selectstart",function(){return false;});
+         $("textarea").unbind("selectstart");
+        // 全局参数
+        var max_history = 7;
+
+
+         String.prototype.format = function() {
+        var resultStr = this.toString();
+        // 参数为对象
+        if(typeof arguments[0] === "object") {
+            for(var i in arguments[0]) {
+                resultStr = resultStr.replace("{" + i + "}", arguments[0][i]);
+            }
+        }
+        // 多个参数
+        else {
+            for(var i = 0; i < arguments.length; i ++) {
+                resultStr = resultStr.replace("{" + i + "}", arguments[i]);
+            }
+        }
+        return resultStr;
+        };
+        var backend = "http://cmdr.mistlab.org:8888/";
+        var mode_query_map = {
+            "resource-item": "resource-query-area",
+            "demand-item": "demand-query-area",
+            "site-item": "site-query-area",
+            "user-item": "user-query-area"
+        };
+
+        $(document).ready(function () {
+            $(".mode-list > li").click(
+                function() {
+                    $(".queryArea").removeClass("current-query-area");
+                    $(".mode-list > li").removeClass("current-mode-item");
+                    $(this).addClass("current-mode-item");
+                    var nid =  mode_query_map[this.id];
+                    $("#"+nid).addClass("current-query-area")
+                }
+            );
+              $("#draw-button").click(function () {
+                  var p = $("#popup")
+                  if (p.css("display") === 'none') {
+                      p.slideDown()
+                  }
+                  else {
+                      p.slideUp()
+                    }
+
+            });
+            // "检索"按钮
+            $(".query-footer-right").click(function(){
+                if($(this).css('opacity') < 0.7) {
+                    return
+                }
+                $(this).css("opacity", 0.67);$(this).css('cursor', 'not-allowed');
+                var s = $("#searching");
+                s.css('display', "block");
+                var desc = $("#resource-textarea").val()
+                $.ajax({
+                    url: backend,
+                    data: {desc: desc},
+                    success: function(data ) {
+                        // 如果有新消息提醒，隐藏它
+                        $("#marker-new-resource").css("display", "none");
+                        // 将原来的搜索结果加到feed-list-old里去
+                        var historyTarget = document.getElementById("feed-output-history");
+                        var target = document.getElementById('feed-output');
+                        historyTarget.innerHTML += target.innerHTML;
+                        // 移除多余的history
+                        if(historyTarget.children.length >= max_history) {
+                            $("#feed-marker-reloading").css("display", "block");
+                        }
+                        for(i=historyTarget.children.length-1;i>=max_history;i--) {
+                            historyTarget.removeChild(historyTarget.children[i])
+                        }
+                        if (historyTarget.children.length > 0) {
+                            $("#feed-marker-middle").css("display", "block");
+                        }
+                        var items = JSON.parse(data).resource_rsp;
+                        var template = document.getElementById('show').innerHTML;
+                        front(template, items, target);
+                        s.css("display","none")
+                        //$('#marker-header-resource').css("display", "block");
+                        $('#marker-header-resource').fadeIn()
+
+                        setTimeout('$("#marker-header-resource").fadeOut();$("#resource-feed-button").css("opacity", 1.0).css("cursor", "pointer");', 2000);
+                        setTimeout('$("#marker-new-resource").css("display", "block")', 50000);
+                    }
+
+                });
+            });
+            // "上次看到这里"的按钮
+            $("#feed-marker-middle").click(function(){
+                $("#marker-new-resource").css("display", "none");
+                $('html,body').animate({scrollTop:0},'slow');
+                $("#resource-feed-button").trigger('click')
+            });
+            $("#resource-feed-button").trigger("click")
+            var minAwayBtm = 100;  // 距离页面底部的最小距离
+            $(window).scroll(function() {
+                var awayBtm = $(document).height() - $(window).scrollTop() - $(window).height();
+                if (awayBtm <= minAwayBtm) {
+                    // 请求上拉回载
+                }
+            });
+
+        })
+    </script>
+    <link rel="stylesheet" href="css/font-awesome.min.css" type="text/css"/>
+    <link rel="stylesheet" href="css/index.css" type="text/css"/>
+</head>
+<body>
+    <div class="topBar">
+        <div class="top-bar-left">
+            <ul class="top-bar-left-list">
+                <li><a>CMDR</a></li>
+                <li><a>云制造设计资源网</a></li>
+                <li><a>作者:陈建为,张霖</a></li>
+                <li><a>复杂产品集成制造实验室 北航</a></li>
+            </ul>
+        </div>
+        <div class="top-bar-right">
+            <ul class="top-bar-right-list">
+                <li><a>FAQ</a></li>
+                <li><a>理论研究</a></li>
+                <li><a>SDK下载</a></li>
+                <li><a>关于我们</a></li>
+                <li><a>侵权投诉</a></li>
+                <li><a>管理员</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="container">
+        <div class="container-left">
+            <div class="mode-and-query">
+                <div class="modeBar">
+                    <ul class="mode-list">
+                        <li class="current-mode-item" id="resource-item"><a>资源检索</a></li>
+                        <li id="demand-item"><a>需求检索</a></li>
+                        <li id="site-item"><a>站点检索</a></li>
+                        <li id="user-item"><a>用户检索</a></li>
+                    </ul>
+                </div>
+                <!--资源检索-->
+                <div class="queryArea current-query-area" id="resource-query-area" >
+                    <div class="search-word">
+                        <textarea class="search-word-textarea" id="resource-textarea" placeholder="输入您需求的设计资源的文字描述"></textarea>
+                    </div>
+                    <div class="query-footer">
+                        <div class="query-footer-left">
+                            <ul class="query-footer-icon-list">
+                                <li id="draw" style="position: relative"><i style="font-size:20px; color:darkseagreen;" class="fa fa-pencil-square-o"></i><a id="draw-button">绘制草图</a>
+                                    <div id="popup" style="display: none; width: 400px; height: 400px; position: absolute; border: 1px solid #e8e8e8; background-color: white; z-index: 300"></div>
+                                </li>
+                                <li><i style="font-size:20px; color:darkseagreen" class="fa fa-cubes"></i><a>相似模型</a></li>
+                                <li><i style="font-size:20px; color:darkseagreen" class="fa fa-cog"></i><a>专业选项</a></li>
+                            </ul>
+                        </div>
+                        <div class="query-footer-right" id="resource-feed-button" style="opacity: 1.0">
+                            <span><a>检索</a></span>
+                        </div>
+                    </div>
+                </div>
+                <!--需求检索-->
+                <div class="queryArea" id="demand-query-area">
+                    <div class="search-word">
+                        <textarea class="search-word-textarea" placeholder="您希望用自己的设计能力帮助别人，输入您希望满足的设计资源的需求的描述"></textarea>
+                    </div>
+                    <div class="query-footer">
+                        <div class="query-footer-left">
+                            <ul class="query-footer-icon-list">
+                                <li><i style="font-size:20px; color:darkseagreen" class="fa fa-pencil-square-o"></i><a>绘制草图</a></li>
+                                <li><i style="font-size:20px; color:darkseagreen" class="fa fa-cloud-upload"></i><a>上传模型</a></li>
+                                <li><i style="font-size:20px; color:darkseagreen" class="fa fa-filter"></i><a>过滤选项</a></li>
+                            </ul>
+                        </div>
+                        <div class="query-footer-right">
+                            <span><a>检索</a></span>
+                        </div>
+                    </div>
+                </div>
+                <!--站点检索-->
+                <div class="queryArea" id="site-query-area">
+                    <div class="search-word">
+                        <textarea class="search-word-textarea" placeholder="您希望找到一个专业的制造业门户站点，或者希望本站能够索引某个站点，请用文字描述它"></textarea>
+                    </div>
+                    <div class="query-footer">
+                        <div class="query-footer-left">
+                            <ul class="query-footer-icon-list">
+                                <li><i style="font-size:20px; color:darkseagreen" class="fa fa-star-half-empty"></i><a>站点选项</a></li>
+                            </ul>
+                        </div>
+                        <div class="query-footer-right">
+                            <span><a>检索</a></span>
+                        </div>
+                    </div>
+                </div>
+                <!--用户检索-->
+                <div class="queryArea" id="user-query-area">
+                    <div class="search-word">
+                        <textarea class="search-word-textarea" placeholder="您希望通过本站寻找制造业数字化相关的朋友，输入您希望寻找的用户的特征描述"></textarea>
+                    </div>
+                    <div class="query-footer">
+                        <div class="query-footer-left">
+                            <ul class="query-footer-icon-list">
+                                <li><i style="font-size:20px; color:darkseagreen" class="fa fa-picture-o"></i><a>草图寻友</a></li>
+                                <li><i style="font-size:20px; color:darkseagreen" class="fa fa-mars-double"></i><a>以武会友</a></li>
+                            </ul>
+                        </div>
+                        <div class="query-footer-right">
+                            <span><a>检索</a></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--主Feed-->
+            <div class="feedArea">
+                <div class="feed-marker-header">
+                    <div class="feed-marker" id="searching">检索中...</div>
+                    <div class="feed-marker" id="marker-header-resource"><span>根据您的需求，云制造中心为您找到了<strong>8</strong>个模型</span></div>
+                    <div class="feed-marker" id="marker-header-demand"><span>根据您的需求，云制造中心为您找到了<strong>8</strong>个设计资源需求</span></div>
+                    <div class="feed-marker" id="marker-header-site"><span>根据您的需求，云制造中心为您找到了<strong>8</strong>个设计资源站点</span></div>
+                    <div class="feed-marker" id="marker-header-user"><span>根据您的需求，云制造中心为您找到了<strong>8</strong>个用户</span></div>
+                    <div class="feed-marker" id="marker-new-resource"><span>有新的云制造设计资源满足您的需求，点击检索</span></div>
+                    <div class="feed-marker" id="marker-new-demand"><span><a>有新需求，点击查看</a></span></div>
+                </div>
+                <div class="feed-new">
+                    <ul class="feed-new-list" id="feed-output"></ul>
+                </div>
+                <div class="feed-marker" id="feed-marker-middle"><span>下面是您上次的检索结果，点击更新</span></div>
+                <div class="feed-old">
+                    <ul class="feed-old-list" id="feed-output-history"></ul>
+                </div>
+                <div class="feed-marker-tail">
+                    <div class="feed-marker" id="feed-marker-reload">加载更多</div>
+                    <div class="feed-marker" id="feed-marker-reloading">加载中...</div>
+                </div>
+
+            </div>
+        </div>
+        <!--<div class="container-right">-->
+            <!--<div class="info-block" id="info-block-hot">-->
+                <!--<span>热词排行</span>-->
+            <!--</div>-->
+            <!--<div class="info-block" id="info-block-site">-->
+                <!--<span>站点排行</span>-->
+            <!--</div>-->
+            <!--<div class="info-block" id="info-block-user">-->
+                <!--<span>用户排行</span>-->
+            <!--</div>-->
+        </div>
+    </div>
+</body>
+</html>

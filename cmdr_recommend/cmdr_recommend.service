@@ -1,0 +1,6 @@
+[Service]
+ExecStart=/opt/cmdr/cmdr_recommend/run
+Restart=always
+StartLimitInterval=0
+[Install]
+WantedBy=default.target

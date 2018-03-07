@@ -1,0 +1,11 @@
+陈建为，毕业设计，《基于多模态编解码器的云3D打印模型匹配方法研究》配套代码
+cmdr_go（GOPATH需要指向这个目录）
+cmdr_html是搭建在Apache上的简单网页版前端，它通过Ajax调用backup中的后台补充数据（需要配置Apache指向这个位置），基于Angular开发
+cmdr_recommend是数据服务，通过thrift的Rpc方式与backup进行交互
+cmdr_predict是机器学习服务，包括训练
+cmdr_crawler是资源抓取服务，到其他网站上抓云制造设计资源
+cmdr_script脚本，包括统计、流式训练等等
+cmdr_thrift_gen，数据结构定义，为thrift服务
+cmdr_pipeline, cmdr流水线。pipeline和script中update的区别是，一个是对新的资源操作，另一个对老的资源操作
+
+线上服务：http://cmdr.mistlab.org

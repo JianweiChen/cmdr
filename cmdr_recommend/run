@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+cd /opt/cmdr/cmdr_recommend
+exec python cmdr_recommend_main.py 2>>/var/log/cmdr/cmdr_recommend_err.log
